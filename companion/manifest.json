@@ -1,16 +1,16 @@
 {
-	"id": "your-module-name",
-	"name": "your-module-name",
-	"shortname": "module-shortname",
+	"id": "ftclive",
+	"name": "FTC Live",
+	"shortname": "ftclive",
 	"description": "A short one line description of your module",
 	"version": "0.0.0",
 	"license": "MIT",
-	"repository": "git+https://github.com/bitfocus/companion-module-your-module-name.git",
-	"bugs": "https://github.com/bitfocus/companion-module-your-module-name/issues",
+	"repository": "git+https://github.com/maths22/companion-module-ftclive.git",
+	"bugs": "https://github.com/maths22/companion-module-ftclive/issues",
 	"maintainers": [
 		{
-			"name": "Your name",
-			"email": "Your email"
+			"name": "Jacob Burroughs",
+			"email": "jburroughs@firstinspires.org"
 		}
 	],
 	"runtime": {

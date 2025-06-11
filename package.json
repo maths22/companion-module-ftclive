@@ -1,5 +1,5 @@
 {
-	"name": "your-module-name",
+	"name": "companion-module-ftclive",
 	"version": "0.1.0",
 	"main": "dist/main.js",
 	"type": "module",
@@ -16,25 +16,25 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/bitfocus/companion-module-your-module-name.git"
+		"url": "git+https://github.com/maths22/companion-module-ftclive.git"
 	},
 	"engines": {
 		"node": "^22.14",
 		"yarn": "^4"
 	},
 	"dependencies": {
-		"@companion-module/base": "~1.11.3"
+		"@companion-module/base": "~1.12.1"
 	},
 	"devDependencies": {
 		"@companion-module/tools": "^2.3.0",
-		"@types/node": "^22.14.1",
-		"eslint": "^9.24.0",
+		"@types/node": "^22.15.31",
+		"eslint": "^9.28.0",
 		"husky": "^9.1.7",
-		"lint-staged": "^15.5.1",
+		"lint-staged": "^16.1.0",
 		"prettier": "^3.5.3",
 		"rimraf": "^6.0.1",
 		"typescript": "~5.8.3",
-		"typescript-eslint": "^8.30.1"
+		"typescript-eslint": "^8.34.0"
 	},
 	"prettier": "@companion-module/tools/.prettierrc.json",
 	"lint-staged": {
