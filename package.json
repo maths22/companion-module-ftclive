@@ -23,7 +23,8 @@
 		"yarn": "^4"
 	},
 	"dependencies": {
-		"@companion-module/base": "~1.12.1"
+		"@companion-module/base": "~1.12.1",
+		"pws": "^7.0.0"
 	},
 	"devDependencies": {
 		"@companion-module/tools": "^2.3.0",
@@ -45,5 +46,8 @@
 			"yarn lint:raw --fix"
 		]
 	},
-	"packageManager": "yarn@4.9.1"
+	"packageManager": "yarn@4.9.1",
+	"workspaces": [
+		"packages/*"
+	]
 }

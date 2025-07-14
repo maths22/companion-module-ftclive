@@ -1,0 +1,6 @@
+{
+	"importFileExtension": ".js",
+	"npmName": "ftclive-client",
+	"supportsES6": true,
+	"platform": "node"
+}
