@@ -6,8 +6,10 @@
 	"scripts": {
 		"postinstall": "husky",
 		"format": "prettier -w .",
-		"package": "run build && companion-module-build",
-		"build": "rimraf dist && run build:main",
+		"package": "run build-self && companion-module-build",
+		"build-self": "rimraf dist && run build:main",
+		"build:all": "yarn workspaces foreach -At exec run build-self",
+		"build": "run build:all",
 		"build:main": "tsc -p tsconfig.build.json",
 		"dev": "tsc -p tsconfig.build.json --watch",
 		"lint:raw": "eslint",
@@ -24,6 +26,7 @@
 	},
 	"dependencies": {
 		"@companion-module/base": "~1.12.1",
+		"ftclive-client": "workspace:*",
 		"pws": "^7.0.0"
 	},
 	"devDependencies": {

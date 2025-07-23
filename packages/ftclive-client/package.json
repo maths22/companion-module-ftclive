@@ -29,6 +29,7 @@
   "typings": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc",
+    "build-self": "run build",
     "prepare": "npm run build"
   },
   "dependencies": {
