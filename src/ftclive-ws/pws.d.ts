@@ -9,9 +9,9 @@ declare module 'pws' {
 		onmessage?: WebSocket['onmessage']
 		onerror?: WebSocket['onerror']
 	}
-	function pws(url: string, protocols: string | string[], webSocket: WebSocket, options?: PwsOptions): WebSocket
+	function pws(url: string, protocols: string | string[], webSocket: typeof WebSocket, options?: PwsOptions): WebSocket
 	function pws(url: string, protocols: string | string[], options?: PwsOptions): WebSocket
-	function pws(url: string, webSocket: WebSocket, options?: PwsOptions): WebSocket
+	function pws(url: string, webSocket: typeof WebSocket, options?: PwsOptions): WebSocket
 	function pws(url: string, options?: PwsOptions): WebSocket
 	export = pws
 }

@@ -1,6 +1,6 @@
 {
 	"name": "companion-module-ftclive",
-	"version": "0.1.0",
+	"version": "0.1.2",
 	"main": "dist/main.js",
 	"type": "module",
 	"scripts": {

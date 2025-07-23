@@ -15,7 +15,6 @@ export async function checkServer(host: string, port: number): Promise<boolean> 
 		const body = await res.text()
 		return body == 'FIRST_TECH_CHALLENGE_SCORING_SOFTWARE'
 	} catch (_) {
-		// TODO logging
 		return false
 	}
 }
@@ -24,6 +23,7 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 	config!: ModuleConfig // Setup in init()
 	eventList: string[] = []
 	apiClientV1?: APIV1Api
+	timeouts: NodeJS.Timeout[] = []
 
 	selectedEvents: ApiV1Event[] = []
 	socketClients: Record<string, WebSocket> = {}
@@ -110,32 +110,74 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 										this.setVariableValues({
 											[`${varPrefix}f${update.payload?.field}_match_name`]: update.payload?.shortName,
 											[`${varPrefix}f${update.payload?.field}_match_status`]: 'preview',
+											[`${varPrefix}match_name`]: update.payload?.shortName,
+											[`${varPrefix}match_status`]: 'preview',
 										})
 										break
 									case ApiV2UpdateType.ShowMatch:
 										this.setVariableValues({
 											[`${varPrefix}f${update.payload?.field}_match_name`]: update.payload?.shortName,
 											[`${varPrefix}f${update.payload?.field}_match_status`]: 'prematch',
+											[`${varPrefix}match_name`]: update.payload?.shortName,
+											[`${varPrefix}match_status`]: 'prematch',
 										})
 										break
 									case ApiV2UpdateType.MatchStart:
-										// TODO timer
+										// TODO timer variables maybe
 										this.setVariableValues({
 											[`${varPrefix}f${update.payload?.field}_match_name`]: update.payload?.shortName,
-											[`${varPrefix}f${update.payload?.field}_match_status`]: 'started',
+											[`${varPrefix}f${update.payload?.field}_match_status`]: 'auto',
+											[`${varPrefix}match_name`]: update.payload?.shortName,
+											[`${varPrefix}match_status`]: 'auto',
 										})
+										// Don't love the timing living here, but this works for the moment
+										this.timeouts.push(
+											setTimeout(
+												() =>
+													this.setVariableValues({
+														[`${varPrefix}f${update.payload?.field}_match_status`]: 'transition',
+														[`${varPrefix}match_status`]: 'transition',
+													}),
+												30 * 1000,
+											),
+										)
+										this.timeouts.push(
+											setTimeout(
+												() =>
+													this.setVariableValues({
+														[`${varPrefix}f${update.payload?.field}_match_status`]: 'teleop',
+														[`${varPrefix}match_status`]: 'teleop',
+													}),
+												(30 + 8) * 1000,
+											),
+										)
+										this.timeouts.push(
+											setTimeout(
+												() =>
+													this.setVariableValues({
+														[`${varPrefix}f${update.payload?.field}_match_status`]: 'done',
+														[`${varPrefix}match_status`]: 'done',
+													}),
+												(30 + 8 + 120) * 1000,
+											),
+										)
 										break
 									case ApiV2UpdateType.MatchAbort:
-										// TODO timer
+										this.timeouts.forEach((t) => clearTimeout(t))
+										this.timeouts = []
 										this.setVariableValues({
 											[`${varPrefix}f${update.payload?.field}_match_name`]: update.payload?.shortName,
 											[`${varPrefix}f${update.payload?.field}_match_status`]: 'aborted',
+											[`${varPrefix}match_name`]: update.payload?.shortName,
+											[`${varPrefix}match_status`]: 'aborted',
 										})
 										break
 									case ApiV2UpdateType.MatchPost:
 										this.setVariableValues({
 											[`${varPrefix}f${update.payload?.field}_match_name`]: update.payload?.shortName,
 											[`${varPrefix}f${update.payload?.field}_match_status`]: 'post',
+											[`${varPrefix}match_name`]: update.payload?.shortName,
+											[`${varPrefix}match_status`]: 'post',
 										})
 										break
 								}
