@@ -6,7 +6,7 @@
 	"scripts": {
 		"postinstall": "husky",
 		"format": "prettier -w .",
-		"package": "run build-self && companion-module-build",
+		"package": "run build:all && companion-module-build",
 		"build-self": "rimraf dist && run build:main",
 		"build:all": "yarn workspaces foreach -At exec run build-self",
 		"build": "run build:all",
