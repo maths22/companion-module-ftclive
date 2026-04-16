@@ -138,7 +138,7 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 														[`${varPrefix}f${update.payload?.field}_match_status`]: 'transition',
 														[`${varPrefix}match_status`]: 'transition',
 													}),
-												30 * 1000,
+												this.config.autoDuration * 1000,
 											),
 										)
 										this.timeouts.push(
@@ -148,7 +148,7 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 														[`${varPrefix}f${update.payload?.field}_match_status`]: 'teleop',
 														[`${varPrefix}match_status`]: 'teleop',
 													}),
-												(30 + 8) * 1000,
+												(this.config.autoDuration + this.config.transitionDuration) * 1000,
 											),
 										)
 										this.timeouts.push(
@@ -158,7 +158,7 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 														[`${varPrefix}f${update.payload?.field}_match_status`]: 'done',
 														[`${varPrefix}match_status`]: 'done',
 													}),
-												(30 + 8 + 120) * 1000,
+												(this.config.autoDuration + this.config.transitionDuration + this.config.teleopDuration) * 1000,
 											),
 										)
 										break

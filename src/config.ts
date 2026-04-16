@@ -5,6 +5,9 @@ export interface ModuleConfig {
 	host: string
 	port: number
 	event: string
+	autoDuration: number
+	transitionDuration: number
+	teleopDuration: number
 }
 
 export function GetConfigFields(self: ModuleInstance): SomeCompanionConfigField[] {
@@ -41,6 +44,33 @@ export function GetConfigFields(self: ModuleInstance): SomeCompanionConfigField[
 					label: e,
 				})),
 			],
+		},
+		{
+			type: 'number',
+			id: 'autoDuration',
+			label: 'Autonomous Duration (seconds)',
+			width: 3,
+			min: 1,
+			max: 600,
+			default: 30,
+		},
+		{
+			type: 'number',
+			id: 'transitionDuration',
+			label: 'Transition Duration (seconds)',
+			width: 3,
+			min: 1,
+			max: 600,
+			default: 8,
+		},
+		{
+			type: 'number',
+			id: 'teleopDuration',
+			label: 'Teleop Duration (seconds)',
+			width: 3,
+			min: 1,
+			max: 600,
+			default: 120,
 		},
 	]
 }
