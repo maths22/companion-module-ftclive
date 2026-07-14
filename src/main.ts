@@ -104,9 +104,11 @@ export default class ModuleInstance extends InstanceBase<MyTypes> {
 						delete this.connectionStatus[key]
 					}
 				})
+				let connectedNew = false
 				this.selectedEvents.forEach((event) => {
 					const eventCode = event.eventCode!
 					if (!this.socketClients[eventCode]) {
+						connectedNew = true
 						const varPrefix = event.division > 0 ? `d${event.division}_` : ''
 						this.socketClients[eventCode] = createFtcLiveWebSocketClient(
 							(level, message) => this.log(level, message),
@@ -270,6 +272,9 @@ export default class ModuleInstance extends InstanceBase<MyTypes> {
 						)
 					}
 				})
+				if (!connectedNew) {
+					this.updateStatus(InstanceStatus.Ok)
+				}
 			} catch (e) {
 				this.log('error', `Failed configuring event: ${e}`)
 				this.updateStatus(InstanceStatus.BadConfig, `Could not find event ${this.config.event}`)
