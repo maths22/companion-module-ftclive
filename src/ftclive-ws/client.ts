@@ -1,4 +1,4 @@
-import { LogLevel } from '@companion-module/base'
+import { type LogLevel } from '@companion-module/base'
 import { ApiV2Update } from 'ftclive-client'
 import pws from 'pws'
 

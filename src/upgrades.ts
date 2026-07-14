@@ -13,8 +13,8 @@ export const UpgradeScripts: CompanionStaticUpgradeScript<ModuleConfig>[] = [
 	 */
 	function (
 		_context: CompanionUpgradeContext<ModuleConfig>,
-		props: CompanionStaticUpgradeProps<ModuleConfig>,
-	): CompanionStaticUpgradeResult<ModuleConfig> {
+		props: CompanionStaticUpgradeProps<ModuleConfig, undefined>,
+	): CompanionStaticUpgradeResult<ModuleConfig, undefined> {
 		const config = props.config || ({} as ModuleConfig)
 		config.port = config.port ?? 80
 		config.autoDuration = config.autoDuration ?? 30
@@ -27,11 +27,17 @@ export const UpgradeScripts: CompanionStaticUpgradeScript<ModuleConfig>[] = [
 			updatedFeedbacks: [],
 		}
 	},
-	// function (context, props) {
-	// 	return {
-	// 		updatedConfig: null,
-	// 		updatedActions: [],
-	// 		updatedFeedbacks: [],
-	// 	}
-	// },
+	function (
+		_context: CompanionUpgradeContext<ModuleConfig>,
+		props: CompanionStaticUpgradeProps<ModuleConfig, undefined>,
+	): CompanionStaticUpgradeResult<ModuleConfig, undefined> {
+		const config = props.config || ({} as ModuleConfig)
+		config.countdownDuration = config.countdownDuration ?? 0
+
+		return {
+			updatedConfig: props.config,
+			updatedActions: [],
+			updatedFeedbacks: [],
+		}
+	},
 ]

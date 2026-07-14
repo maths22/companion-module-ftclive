@@ -1,4 +1,4 @@
-import { InstanceBase, runEntrypoint, InstanceStatus, SomeCompanionConfigField } from '@companion-module/base'
+import { InstanceBase, InstanceStatus, type InstanceTypes, type SomeCompanionConfigField } from '@companion-module/base'
 import { GetConfigFields, type ModuleConfig } from './config.js'
 import { UpdateVariableDefinitions } from './variables.js'
 import { UpgradeScripts } from './upgrades.js'
@@ -19,11 +19,16 @@ export async function checkServer(host: string, port: number): Promise<boolean> 
 	}
 }
 
-export class ModuleInstance extends InstanceBase<ModuleConfig> {
+export interface MyTypes extends InstanceTypes {
+	config: ModuleConfig
+}
+
+export default class ModuleInstance extends InstanceBase<MyTypes> {
 	config!: ModuleConfig // Setup in init()
 	eventList: string[] = []
 	apiClientV1?: APIV1Api
-	timeouts: NodeJS.Timeout[] = []
+	timeouts: Record<string, NodeJS.Timeout[]> = {}
+	intervals: Record<string, NodeJS.Timeout[]> = {}
 
 	selectedEvents: ApiV1Event[] = []
 	socketClients: Record<string, WebSocket> = {}
@@ -105,6 +110,9 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 								}
 							},
 							(update) => {
+								const now = Date.now()
+								let timerInterval: NodeJS.Timeout
+								const timeoutKey = `${eventCode}_${update.payload?.shortName}`
 								switch (update.updateType) {
 									case ApiV2UpdateType.ShowPreview:
 										this.setVariableValues({
@@ -126,50 +134,114 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 										// TODO timer variables maybe
 										this.setVariableValues({
 											[`${varPrefix}f${update.payload?.field}_match_name`]: update.payload?.shortName,
-											[`${varPrefix}f${update.payload?.field}_match_status`]: 'auto',
+											[`${varPrefix}f${update.payload?.field}_match_status`]:
+												this.config.countdownDuration > 0 ? 'countdown' : 'auto',
 											[`${varPrefix}match_name`]: update.payload?.shortName,
-											[`${varPrefix}match_status`]: 'auto',
+											[`${varPrefix}match_status`]: this.config.countdownDuration > 0 ? 'countdown' : 'auto',
+											[`${varPrefix}match_timer`]:
+												this.config.countdownDuration > 0 ? this.config.countdownDuration : this.config.autoDuration,
 										})
-										// Don't love the timing living here, but this works for the moment
-										this.timeouts.push(
+										this.timeouts[timeoutKey] = []
+										this.intervals[timeoutKey] = []
+										timerInterval = setInterval(() => {
+											const elapsed = Math.floor((Date.now() - now) / 1000)
+											let remainingInPeriod = 0
+											if (elapsed < this.config.countdownDuration) {
+												remainingInPeriod = this.config.countdownDuration - elapsed
+											} else if (elapsed < this.config.countdownDuration + this.config.autoDuration) {
+												remainingInPeriod = this.config.countdownDuration + this.config.autoDuration - elapsed
+											} else if (
+												elapsed <
+												this.config.countdownDuration + this.config.autoDuration + this.config.transitionDuration
+											) {
+												remainingInPeriod =
+													this.config.countdownDuration +
+													this.config.autoDuration +
+													this.config.transitionDuration -
+													elapsed
+											} else if (
+												elapsed <
+												this.config.countdownDuration +
+													this.config.autoDuration +
+													this.config.transitionDuration +
+													this.config.teleopDuration
+											) {
+												remainingInPeriod =
+													this.config.countdownDuration +
+													this.config.autoDuration +
+													this.config.transitionDuration +
+													this.config.teleopDuration -
+													elapsed
+											}
+											this.setVariableValues({
+												[`${varPrefix}f${update.payload?.field}_match_timer`]: remainingInPeriod,
+												[`${varPrefix}match_timer`]: remainingInPeriod,
+											})
+										}, 100)
+
+										this.intervals[timeoutKey].push(timerInterval)
+										if (this.config.countdownDuration > 0) {
+											this.timeouts[timeoutKey].push(
+												setTimeout(
+													() =>
+														this.setVariableValues({
+															[`${varPrefix}f${update.payload?.field}_match_status`]: 'auto',
+															[`${varPrefix}match_status`]: 'auto',
+														}),
+													this.config.countdownDuration * 1000,
+												),
+											)
+										}
+										this.timeouts[timeoutKey].push(
 											setTimeout(
 												() =>
 													this.setVariableValues({
 														[`${varPrefix}f${update.payload?.field}_match_status`]: 'transition',
 														[`${varPrefix}match_status`]: 'transition',
 													}),
-												this.config.autoDuration * 1000,
+												(this.config.countdownDuration + this.config.autoDuration) * 1000,
 											),
 										)
-										this.timeouts.push(
+										this.timeouts[timeoutKey].push(
 											setTimeout(
 												() =>
 													this.setVariableValues({
 														[`${varPrefix}f${update.payload?.field}_match_status`]: 'teleop',
 														[`${varPrefix}match_status`]: 'teleop',
 													}),
-												(this.config.autoDuration + this.config.transitionDuration) * 1000,
+												(this.config.countdownDuration + this.config.autoDuration + this.config.transitionDuration) *
+													1000,
 											),
 										)
-										this.timeouts.push(
+										this.timeouts[timeoutKey].push(
 											setTimeout(
-												() =>
+												() => {
 													this.setVariableValues({
 														[`${varPrefix}f${update.payload?.field}_match_status`]: 'done',
 														[`${varPrefix}match_status`]: 'done',
-													}),
-												(this.config.autoDuration + this.config.transitionDuration + this.config.teleopDuration) * 1000,
+													})
+													clearInterval(timerInterval)
+												},
+												(this.config.countdownDuration +
+													this.config.autoDuration +
+													this.config.transitionDuration +
+													this.config.teleopDuration) *
+													1000,
 											),
 										)
 										break
 									case ApiV2UpdateType.MatchAbort:
-										this.timeouts.forEach((t) => clearTimeout(t))
-										this.timeouts = []
+										this.timeouts[timeoutKey].forEach((t) => clearTimeout(t))
+										delete this.timeouts[timeoutKey]
+										this.intervals[timeoutKey].forEach((i) => clearInterval(i))
+										delete this.intervals[timeoutKey]
 										this.setVariableValues({
 											[`${varPrefix}f${update.payload?.field}_match_name`]: update.payload?.shortName,
 											[`${varPrefix}f${update.payload?.field}_match_status`]: 'aborted',
+											[`${varPrefix}f${update.payload?.field}_match_timer`]: 0,
 											[`${varPrefix}match_name`]: update.payload?.shortName,
 											[`${varPrefix}match_status`]: 'aborted',
+											[`${varPrefix}match_timer`]: 0,
 										})
 										break
 									case ApiV2UpdateType.MatchPost:
@@ -213,4 +285,4 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 	}
 }
 
-runEntrypoint(ModuleInstance, UpgradeScripts)
+export { UpgradeScripts }

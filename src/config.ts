@@ -1,10 +1,11 @@
 import { Regex, type SomeCompanionConfigField } from '@companion-module/base'
-import { ModuleInstance } from './main.js'
+import ModuleInstance from './main.js'
 
-export interface ModuleConfig {
+export type ModuleConfig = {
 	host: string
 	port: number
 	event: string
+	countdownDuration: number
 	autoDuration: number
 	transitionDuration: number
 	teleopDuration: number
@@ -44,6 +45,15 @@ export function GetConfigFields(self: ModuleInstance): SomeCompanionConfigField[
 					label: e,
 				})),
 			],
+		},
+		{
+			type: 'number',
+			id: 'countdownDuration',
+			label: 'Countdown Duration (seconds)',
+			width: 3,
+			min: 0,
+			max: 3,
+			default: 0,
 		},
 		{
 			type: 'number',
