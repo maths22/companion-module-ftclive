@@ -4,8 +4,10 @@ import { UpdateVariableDefinitions } from './variables.js'
 import { UpgradeScripts } from './upgrades.js'
 import { UpdateActions } from './actions.js'
 import { UpdateFeedbacks } from './feedbacks.js'
-import { APIV1Api, ApiV1Event, ApiV2UpdateType, createConfiguration, ServerConfiguration } from 'ftclive-client'
 import { createFtcLiveWebSocketClient } from './ftclive-ws/client.js'
+import type { paths, components } from './ftclive.d.ts'
+import createClient from 'openapi-fetch'
+import type { Client } from 'openapi-fetch'
 
 export async function checkServer(host: string, port: number): Promise<boolean> {
 	try {
@@ -26,11 +28,11 @@ export interface MyTypes extends InstanceTypes {
 export default class ModuleInstance extends InstanceBase<MyTypes> {
 	config!: ModuleConfig // Setup in init()
 	eventList: string[] = []
-	apiClientV1?: APIV1Api
+	apiClient?: Client<paths>
 	timeouts: Record<string, NodeJS.Timeout[]> = {}
 	intervals: Record<string, NodeJS.Timeout[]> = {}
 
-	selectedEvents: ApiV1Event[] = []
+	selectedEvents: components['schemas']['ApiV1Event'][] = []
 	socketClients: Record<string, WebSocket> = {}
 	connectionStatus: Record<string, boolean> = {}
 
@@ -59,10 +61,14 @@ export default class ModuleInstance extends InstanceBase<MyTypes> {
 			this.updateStatus(InstanceStatus.BadConfig, 'Server not found or is not running FTCLive')
 			return
 		}
-		this.apiClientV1 = new APIV1Api(
-			createConfiguration({ baseServer: new ServerConfiguration(`http://${config.host}:${config.port}`, {}) }),
-		)
-		this.eventList = (await this.apiClientV1.getEvents()).eventCodes!
+		this.apiClient = createClient<paths>({ baseUrl: `http://${config.host}:${config.port}` })
+
+		const getEventsResult = await this.apiClient.GET('/api/v1/events/')
+		if (getEventsResult.error) {
+			this.updateStatus(InstanceStatus.BadConfig, 'Failed to fetch events from server')
+			return
+		}
+		this.eventList = getEventsResult.data.eventCodes!
 		if (this.config.event) {
 			try {
 				const eventCode = this.config.event
@@ -76,10 +82,16 @@ export default class ModuleInstance extends InstanceBase<MyTypes> {
 				}
 				this.selectedEvents = await Promise.all(
 					eventList.map(async (e) => {
-						const res = await this.apiClientV1!.getEvent(e)
-						const eventCode = res.eventCode!
-						this.log('info', `Connected to event ${eventCode} (${res.name})`)
-						return res
+						if (!this.apiClient) {
+							throw new Error('API client not initialized')
+						}
+						const res = await this.apiClient.GET('/api/v1/events/{code}/', { params: { path: { code: e } } })
+						if (res.error) {
+							throw new Error(`Failed to fetch event ${e}: ${res.error.message}`)
+						}
+						const eventCode = res.data.eventCode!
+						this.log('info', `Connected to event ${eventCode} (${res.data.name})`)
+						return res.data
 					}),
 				)
 				this.updateStatus(InstanceStatus.Connecting)
@@ -114,7 +126,7 @@ export default class ModuleInstance extends InstanceBase<MyTypes> {
 								let timerInterval: NodeJS.Timeout
 								const timeoutKey = `${eventCode}_${update.payload?.shortName}`
 								switch (update.updateType) {
-									case ApiV2UpdateType.ShowPreview:
+									case 'SHOW_PREVIEW':
 										this.setVariableValues({
 											[`${varPrefix}f${update.payload?.field}_match_name`]: update.payload?.shortName,
 											[`${varPrefix}f${update.payload?.field}_match_status`]: 'preview',
@@ -122,7 +134,7 @@ export default class ModuleInstance extends InstanceBase<MyTypes> {
 											[`${varPrefix}match_status`]: 'preview',
 										})
 										break
-									case ApiV2UpdateType.ShowMatch:
+									case 'SHOW_MATCH':
 										this.setVariableValues({
 											[`${varPrefix}f${update.payload?.field}_match_name`]: update.payload?.shortName,
 											[`${varPrefix}f${update.payload?.field}_match_status`]: 'prematch',
@@ -130,7 +142,7 @@ export default class ModuleInstance extends InstanceBase<MyTypes> {
 											[`${varPrefix}match_status`]: 'prematch',
 										})
 										break
-									case ApiV2UpdateType.MatchStart:
+									case 'MATCH_START':
 										// TODO timer variables maybe
 										this.setVariableValues({
 											[`${varPrefix}f${update.payload?.field}_match_name`]: update.payload?.shortName,
@@ -230,7 +242,7 @@ export default class ModuleInstance extends InstanceBase<MyTypes> {
 											),
 										)
 										break
-									case ApiV2UpdateType.MatchAbort:
+									case 'MATCH_ABORT':
 										this.timeouts[timeoutKey].forEach((t) => clearTimeout(t))
 										delete this.timeouts[timeoutKey]
 										this.intervals[timeoutKey].forEach((i) => clearInterval(i))
@@ -244,7 +256,7 @@ export default class ModuleInstance extends InstanceBase<MyTypes> {
 											[`${varPrefix}match_timer`]: 0,
 										})
 										break
-									case ApiV2UpdateType.MatchPost:
+									case 'MATCH_POST':
 										this.setVariableValues({
 											[`${varPrefix}f${update.payload?.field}_match_name`]: update.payload?.shortName,
 											[`${varPrefix}f${update.payload?.field}_match_status`]: 'post',

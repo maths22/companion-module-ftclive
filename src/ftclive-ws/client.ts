@@ -1,6 +1,6 @@
 import { type LogLevel } from '@companion-module/base'
-import { ApiV2Update } from 'ftclive-client'
 import pws from 'pws'
+import type { components } from '../ftclive.d.ts'
 
 export function createFtcLiveWebSocketClient(
 	log: (level: LogLevel, message: string) => void,
@@ -8,7 +8,7 @@ export function createFtcLiveWebSocketClient(
 	port: number,
 	eventCode: string,
 	onConnectionChange: (isConnected: boolean) => void,
-	onMessage: (message: ApiV2Update) => void,
+	onMessage: (message: components['schemas']['ApiV2Update']) => void,
 ): WebSocket {
 	const url = `ws://${host}:${port}/api/v2/stream/?code=${eventCode}`
 
@@ -29,7 +29,7 @@ export function createFtcLiveWebSocketClient(
 		if (msg.data === 'pong') {
 			return
 		}
-		const data: ApiV2Update = JSON.parse(msg.data)
+		const data: components['schemas']['ApiV2Update'] = JSON.parse(msg.data)
 		onMessage(data)
 	}
 
