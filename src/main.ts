@@ -233,6 +233,8 @@ export default class ModuleInstance extends InstanceBase<MyTypes> {
 													this.setVariableValues({
 														[`${varPrefix}f${update.payload?.field}_match_status`]: 'done',
 														[`${varPrefix}match_status`]: 'done',
+														[`${varPrefix}f${update.payload?.field}_match_timer`]: 0,
+														[`${varPrefix}match_timer`]: 0,
 													})
 													clearInterval(timerInterval)
 												},
