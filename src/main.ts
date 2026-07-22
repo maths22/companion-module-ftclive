@@ -134,6 +134,7 @@ export default class ModuleInstance extends InstanceBase<MyTypes> {
 											[`${varPrefix}f${update.payload?.field}_match_status`]: 'preview',
 											[`${varPrefix}match_name`]: update.payload?.shortName,
 											[`${varPrefix}match_status`]: 'preview',
+											[`${varPrefix}match_update_data`]: JSON.stringify(update.payload),
 										})
 										break
 									case 'SHOW_MATCH':
@@ -142,6 +143,7 @@ export default class ModuleInstance extends InstanceBase<MyTypes> {
 											[`${varPrefix}f${update.payload?.field}_match_status`]: 'prematch',
 											[`${varPrefix}match_name`]: update.payload?.shortName,
 											[`${varPrefix}match_status`]: 'prematch',
+											[`${varPrefix}match_update_data`]: JSON.stringify(update.payload),
 										})
 										break
 									case 'MATCH_START':
@@ -154,6 +156,7 @@ export default class ModuleInstance extends InstanceBase<MyTypes> {
 											[`${varPrefix}match_status`]: this.config.countdownDuration > 0 ? 'countdown' : 'auto',
 											[`${varPrefix}match_timer`]:
 												this.config.countdownDuration > 0 ? this.config.countdownDuration : this.config.autoDuration,
+											[`${varPrefix}match_update_data`]: JSON.stringify(update.payload),
 										})
 										this.timeouts[timeoutKey] = []
 										this.intervals[timeoutKey] = []
@@ -258,6 +261,7 @@ export default class ModuleInstance extends InstanceBase<MyTypes> {
 											[`${varPrefix}match_name`]: update.payload?.shortName,
 											[`${varPrefix}match_status`]: 'aborted',
 											[`${varPrefix}match_timer`]: 0,
+											[`${varPrefix}match_update_data`]: JSON.stringify(update.payload),
 										})
 										break
 									case 'MATCH_POST':
@@ -266,6 +270,7 @@ export default class ModuleInstance extends InstanceBase<MyTypes> {
 											[`${varPrefix}f${update.payload?.field}_match_status`]: 'post',
 											[`${varPrefix}match_name`]: update.payload?.shortName,
 											[`${varPrefix}match_status`]: 'post',
+											[`${varPrefix}match_update_data`]: JSON.stringify(update.payload),
 										})
 										break
 								}
