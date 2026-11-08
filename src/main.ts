@@ -128,6 +128,15 @@ export default class ModuleInstance extends InstanceBase<MyTypes> {
 								let timerInterval: NodeJS.Timeout
 								const timeoutKey = `${eventCode}_${update.payload?.shortName}`
 								switch (update.updateType) {
+									case 'INIT_SUBMITTED':
+										this.setVariableValues({
+											[`${varPrefix}f${update.payload?.field}_match_name`]: update.payload?.shortName,
+											[`${varPrefix}f${update.payload?.field}_match_status`]: 'preview',
+											[`${varPrefix}match_name`]: update.payload?.shortName,
+											[`${varPrefix}match_status`]: 'preview',
+											[`${varPrefix}match_update_data`]: JSON.stringify(update.payload),
+										})
+										break
 									case 'SHOW_PREVIEW':
 										this.setVariableValues({
 											[`${varPrefix}f${update.payload?.field}_match_name`]: update.payload?.shortName,
